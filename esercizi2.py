@@ -57,3 +57,20 @@ def GenTemp(mese,N=12):
     tmax = stdM*(tmax-N/2)/sqrt(N/12)+avgM
     return round(tmin*100)/100, round(tmax*100)/100
 
+def GeneraTemperature(AnnoIniziale,NumeroAnni):
+    T = []
+    for anno in range(AnnoIniziale,AnnoIniziale+NumeroAnni):
+        L = []
+        for mese in mesi:
+            x = GenTemp(mese)
+            L.append(x)
+        T.append(L)
+    return (AnnoIniziale,T)
+
+def DammiTemp(anno,mese,DatasetTemperature):
+    AnnoIniziale = DatasetTemperature[0]
+    AnnoFinale = AnnoIniziale+len(DatasetTemperature[1])-1
+    if anno<AnnoIniziale or anno>AnnoFinale:
+        print("Errore: anno non disponibile")
+        return
+    print("Anno corretto ma non ancora implementato")
