@@ -12,34 +12,33 @@ dnaseq = 'ACATGATGACCAAGAACCTGGCAGGAAAGACCCCGACGGACCTGGTGCA'+\
          'CTCAGCCTGTGCCAGCCCAGTGAATGCGTCAATAAAAAAGCTGTTTTTG'+\
          'CTAAAAAAAAAAAAAAAAAAA'
   
-def transcription(dnaseq):
+def transcription(dnaseq, start, stop):
     rnaseq = ""
-    for i in range(len(dnaseq)):
-        if dnaseq[i] == 'T':
+    for n in dnaseq[start:stop]:
+        if n == 'T':
             rnaseq += 'U'
         else:
-            rnaseq += dnaseq[i]
+            rnaseq += n
     return rnaseq
 
-def translation(rnaseq):
+def translation(rnaseq, start, stop):
     from mylib.biodata import GeneticCode
-    assert len(rnaseq)%3 == 0
     proteinseq = ''
-    for i in range(0,len(rnaseq),3):
+    stop = stop-(stop-start)%3
+    for i in range(start,stop,3):
         proteinseq += GeneticCode[rnaseq[i:i+3]]
     return proteinseq
 
 class dna():
-    from mylib.biodata import GeneticCode
     
-    def __init__(self,sequence):
-        self.sequence = sequence
+    def __init__(self,sequence=''):
+        self.sequence = sequence+'$'
         self.length = len(sequence)
         
     def __str__(self):
-        return "5': "+self.sequence + " 3'"
+        return "5': "+self.sequence[:-1] + " 3'"
         
-    def transcription(self,start,stop):
+    def transcription(self,start=0,stop=-1):
         rnaseq = ""
         for n in self.sequence[start:stop]:
             if n == 'T':
@@ -48,10 +47,12 @@ class dna():
                 rnaseq += n
         return rnaseq
     
-    def translation(self,start,stop):
+    def translation(self,start=0,stop=-1):
+        from mylib.biodata import GeneticCode
         rnaseq = self.transcription(start,stop)
+        stop = len(rnaseq)-len(rnaseq)%3
         proteinseq = ''
-        for i in range(0,len(rnaseq),3):
+        for i in range(0,stop,3):
             codon = rnaseq[i:i+3]
             proteinseq  += GeneticCode[codon]
         return proteinseq
@@ -72,11 +73,15 @@ class dna():
                 d[a] = 1
         return d
     
-
+    def from_fasta(self,file):
+        from Bio import SeqIO
+        seq = str(next(SeqIO.parse(file, "fasta")).seq)
+        self.__init__(seq)
+        
     
 def sommacomplessi(x,y):
     return complesso(x.re+y.re,x.img+y.img)          
-
+       
 class complesso():
     def __init__(self, re, img):
         self.re = re
