@@ -95,7 +95,6 @@ def BruteForce(listaAlimenti, costoMax):
         possibili scelta, che sono in numero esponenziale
         rispetto al numero di alimenti
     '''
-    n = len(listaAlimenti)
     valMax = 0.0
     for S in powerSet(listaAlimenti):
         val = 0.0
@@ -120,4 +119,55 @@ def timeAlgs(menu,calMax,pref):
     print("Secondi impegati da BruteForce:",t1)
     
 activities = [(6,10),(1,4),(12,16),(5,7),(8,12),(3,9),\
-              (0,6),(5,9),(8,11),(3,5),(2,14)]
+              (0,6),(5,9),(8,11),(3,5),(2,14),(3,7),
+              (10,15),(1,3),(2,6),(6,9)]
+
+start = 0
+finish = 1
+
+def compatible(a1,a2):
+    return a1[finish]<=a2[start] or a2[finish]<=a1[start]
+
+def feasibleSolution(L):
+    n = len(L)
+    for i in range(n-1):
+        if not compatible(L[i],L[i+1]):
+            return False
+    return True
+
+def BFSelection(sortedActivities):
+    maxLen = 0
+    PS = powerSet(sortedActivities)
+    for S in PS:
+        #print(S)
+        if feasibleSolution(S) and len(S)>maxLen:
+            #print('updating optimal solution ->',S)
+            maxLen = len(S)
+            optimalSolution = S
+    return optimalSolution
+
+def finishTime(x):
+    return x[finish]
+
+'''
+Per ordinare un insieme di attività rispetto
+al finish time:
+    sortedAct = sorted(activities,key=finishTime)
+'''
+
+def genRandomActivities(n,upperBound=29):
+    from random import randint
+    activities = []
+    for i in range(n):
+        startTime = randint(0,upperBound-1)
+        finishTime = randint(startTime+1,upperBound)
+        activities.append((startTime,finishTime))
+    return activities
+
+def greedySelection(sortedActivities):
+    S = []
+    for a in sortedActivities:
+        if feasibleSolution(S+[a]):
+            S.append(a)
+    return S
+
