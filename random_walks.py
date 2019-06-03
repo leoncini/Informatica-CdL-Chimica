@@ -3,93 +3,105 @@
 """
 Created on Tue May 21 09:08:36 2019
 
-@author: mauro
+@author: Mauro Leoncini
+
+Example usage:
+    S = genParticles(100)
+    plotData(S)
+    Brownian(S,1000)
+    plotData(S)
+    # You are encouraged play with the possible moves.
+    # For instance add another (1,0) move, i.e., change 
+    # possibleMoves in the particle class to [(1,0),(-1,0),(0,1),(0,-1),(1,0)]
+    # and see what happens
 """
-from random import choice
+import pylab
+from random import sample
 
-def rollDie(): 
-    """returns a random int between 1 and 6"""
-    return choice([1,2,3,4,5,6])    
+STEPSIZE = 0.01
+gridsize = 50
 
-def testRoll(n = 10):
-    """Ruturns a string with the results of 
-       n die rolls
-    """
-    result = ''
-    for i in range(n):
-        result = result + ', ' + str(rollDie())
-    return result[2:]
-
-def runSim(goal, numTrials, txt):
-    """ Simulates numTrials experiments, each one
-        represented by len(goal) die rolls. Counts
-        the number of experiments that give 
-        goal as results in order to estimate its
-        probability of occurrence. Prints estimated
-        and theoretical probabilities.
-    """
-    total = 0
-    for i in range(numTrials):
-        result = ''
-        for j in range(len(goal)):
-            result += str(rollDie())
-        if result == goal:
-            total += 1
-    print('Actual probability of', txt, '=',
-    round(1/(6**len(goal)), 8))
-    estProbability = round(total/numTrials, 8)
-    print('Estimated Probability of', txt, '=',
-    round(estProbability, 8))
-     
-def checkCoin(N = 1000):
-    """ Simulates N coin tosses """
-    nH = 0  
-    for _ in range(N):
-        if rollDie() == 'H':
-            nH += 1 
-    return abs(nH/N-0.5)
-
-def checkOnes(N=1000):
-    """ Estimates the probability of the event
-        'At least one 1 in five die rolls'
-    """
-    n = 0
-    for _ in range(N):
-        r = testRoll(5)
-        if r.find('1')!=-1:
-            n += 1
-    return n/N
+class particle:
+    ''' Class that implements a single particle '''
+    def __init__(self, x=0, y=0):
+        self.startx = x
+        self.starty = y
+        self.x = x
+        self.y = y
+        
+    def __str__(self):
+        return '('+str(self.x)+', '+str(self.y)+')'
     
-def sameDate(numPeople, numSame):
-    """ Simulates the experiment of picking numPeople
-        at random and checking if there is one or
-        more subgroups of at least numSame people
-        born the same day
-    """
-    possibleDates = list(range(366))
-    birthdays = [0]*366
-    for p in range(numPeople):
-        birthDate = choice(possibleDates)
-        birthdays[birthDate] += 1
-    return max(birthdays) >= numSame
-        
-        
-def findProb(N=1000, numPeople=20, numSame=2):
-    """ Estimates the probability of having one or
-        more subgroups of at least numSame people
-        born the same day
-    """ 
-    nS = 0
-    for _ in range(N):
-        if sameDate(numPeople,numSame):
-            nS += 1
-    return nS/N
+    def move(self, particles, moveController):
+        from random import choice
+        possibleMoves = [(1,0),(-1,0),(0,1),(0,-1)]
+        actualMove = choice(possibleMoves)
+        x = self.x+actualMove[0]
+        y = self.y+actualMove[1]
+        if moveController(x,y,particles):
+            self.x = x
+            self.y = y
 
-        
-        
-        
-        
-        
-        
-        
-        
+    def distanceCovered(self):
+        from math import sqrt
+        dx = self.x - self.startx
+        dy = self.y - self.starty
+        return sqrt(dx**2+dy**2)
+    
+    def getX(self):
+        return self.x
+    
+    def getY(self):
+        return self.y
+
+def genParticles(n,center=True):
+    ''' Generate n particles and pace them into a square grid of 
+        size gridsize ''' 
+    global gridsize
+    if center:
+        disp=int(gridsize/4)
+    else:
+        disp=0
+    grid = []
+    for  i in range(disp,gridsize-disp):
+            for j in range(disp,gridsize-disp):
+                grid.append((i,j))
+    initialPositions = sample(grid,n)
+    particles = []
+    for p in initialPositions:
+        particles.append(particle(p[0],p[1]))
+    # The following is more pythonic
+    # particles = [particle(x,y) for x,y in sample(grid,n)]
+    
+    #But place one particle in each corner as well
+    particles.append(particle(0,0))
+    particles.append(particle(0,gridsize-1))
+    particles.append(particle(gridsize-1,0))
+    particles.append(particle(gridsize-1,gridsize-1))
+    return particles
+
+def viableMove(x,y,particles):
+    ''' Returns true if (x,y) is a free position in the grid '''
+    global gridsize
+    if x<0 or y<0 or x>=gridsize or y >=gridsize:
+        return False
+    for p in particles:
+        if x == p.getX() and y == p.getY():
+            return False
+    return True
+
+def Brownian(particles,nSteps,controller=viableMove):
+    ''' Simulates nSteps steps of random movements of the particles
+        in the grid. Uses the function controller to checke whether the
+        movo il legal'''
+    n = len(particles)
+    for _ in range(nSteps):
+        randomOrder = sample(particles,n)
+        for p in randomOrder:
+            p.move(particles, controller)
+  
+def plotData(S):
+    x = [p.getX() for p in S]
+    y = [p.getY() for p in S]
+    pylab.xticks(range(0,gridsize,10))
+    pylab.plot(x, y, 'bo', label = 'Random Walk')
